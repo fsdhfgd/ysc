@@ -1,0 +1,46 @@
+# Cloudflare Pages / Workers - HTTP 响应头
+# --------------------------------------------------------------------------
+# 规则按"从上到下、首个匹配生效"。这里给出的是单页 SPA 场景下的推荐值。
+# --------------------------------------------------------------------------
+
+/
+  # 安全相关
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: no-referrer
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), clipboard-read=(self), clipboard-write=(self)
+  Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+  # 跨源(本项目纯本地存储,不需要外部 API 联通;若日后接入 CORS 后端再调整)
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Embedder-Policy: require-corp
+
+# 静态 HTML — 不缓存,确保用户始终拿到最新版本
+/*.html
+  Cache-Control: public, max-age=0, must-revalidate
+
+# 根路径默认入口
+/index.html
+  Cache-Control: public, max-age=0, must-revalidate
+
+# 字体、图标等可缓存
+/*.svg
+  Cache-Control: public, max-age=86400, immutable
+/*.png
+  Cache-Control: public, max-age=86400, immutable
+/*.jpg
+  Cache-Control: public, max-age=86400, immutable
+/*.css
+  Cache-Control: public, max-age=86400, immutable
+/*.js
+  Cache-Control: public, max-age=86400, immutable
+
+# robots.txt:站内 SPA 暂无爬取价值,默认禁止
+/robots.txt
+  Cache-Control: public, max-age=3600
+
+# /r/* 是自动托管的反向代理出口(由 _worker.js 转发)
+# 5 分钟边缘缓存 + CORS 全开,便于 TVBox 客户端 / 第三方抓取
+/r/*
+  Access-Control-Allow-Origin: *
+  Cache-Control: public, max-age=300
+  X-Content-Type-Options: nosniff

@@ -1,0 +1,3 @@
+User-agent: *
+Disallow: /
+# 本项目为内部管理工具,所有数据存储在浏览器 localStorage,无公开内容。
