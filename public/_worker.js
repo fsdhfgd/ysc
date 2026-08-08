@@ -1,15 +1,16 @@
-// _worker.js — Cloudflare Pages 路由处理
+// _worker.js — ⚠️ 已废弃,不会被 Cloudflare Pages 自动识别!
 // --------------------------------------------------------------------------
-// 部署:把此文件放到 public/_worker.js,Cloudflare Pages 会自动把它作为
-// Worker 注入(无需 wrangler / Functions 目录结构)。它会在每次请求时执行。
+// Cloudflare Pages 不会读取 public/_worker.js,只识别 functions/ 目录。
+// 真正的 Worker 实现已迁到 functions/[[path]].js,本文件仅保留为
+// 历史参考 / 给习惯 wrangler.toml 方式的本地调试用。
 //
-// 职责:
-//   1) /r/<uid>/<cid>  →  反向代理到 ?target=<base64-encoded original URL>
-//                         (由前端在拼专属链接时把 c.url 编码后塞进 query),
-//                         用于把"自动托管"链接透明转发到真实的 TVBox 源。
-//   2) 其他非静态资源路径 → 重写到根 index.html(SPA fallback)。
-//   3) 已有静态资源      → 透传。
+// 部署到 Cloudflare Pages 只需:
+//   1) 推送 functions/[[path]].js 到 GitHub 根目录的 functions/ 下
+//   2) 推送 public/ 下所有静态资源
+//   3) Pages 控制台: 构建命令留空,构建输出目录填 public
 // --------------------------------------------------------------------------
+
+// 以下是历史 wrangler 风格实现,Cloudflare Pages 不会运行它。
 
 // 允许的目标源域名白名单(留空 = 不限制;生产环境建议按需收敛)
 const ALLOWED_TARGET_HOSTS = [
