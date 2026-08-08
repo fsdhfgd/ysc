@@ -1,0 +1,61 @@
+name: Deploy to Cloudflare Pages
+
+# 触发条件:推送到 main 分支、手动触发、或在 Cloudflare Pages 后台勾选了
+# "Build with GitHub Actions" 时由 Cloudflare 触发。
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# 避免重复部署同一次 commit
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      deployments: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      # -----------------------------------------------------------
+      # 方式 A:Cloudflare 官方 Action(推荐,无需在本地保存 API Token)
+      # 在 GitHub 仓库 Settings → Secrets and variables → Actions 添加:
+      #   CLOUDFLARE_API_TOKEN   你的 Cloudflare API Token(需 Pages:Edit 权限)
+      #   CLOUDFLARE_ACCOUNT_ID  你的 Cloudflare Account ID
+      #   CLOUDFLARE_PROJECT_NAME Pages 项目名(留空则使用 wrangler.toml 中的 name)
+      # -----------------------------------------------------------
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/pages-action@v1
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          projectName: ${{ secrets.CLOUDFLARE_PROJECT_NAME || 'tvbox-config-manager' }}
+          directory: public
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+          # 自动生成的预览 URL 模式,pr 会得到一个 *.tvbox-config-manager.pages.dev
+          deploymentEnvironment: production
+          # 失败时不创建空部署
+          failOnFailedCommand: true
+
+      # -----------------------------------------------------------
+      # 方式 B:用 wrangler CLI 部署(如果你喜欢本地命令行模式,把上面
+      # 整段 "Deploy to Cloudflare Pages" 注释掉,启用下面这段即可)
+      # -----------------------------------------------------------
+      # - name: Install wrangler
+      #   run: npm install -g wrangler
+      # - name: Deploy
+      #   env:
+      #     CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      #     CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      #   run: wrangler pages deploy public --project-name=tvbox-config-manager
